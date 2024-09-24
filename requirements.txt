@@ -3,3 +3,4 @@ yt_dlp
 asyncio
 logging
 flask
+gunicorn==19.7.1

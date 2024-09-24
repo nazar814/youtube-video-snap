@@ -55,7 +55,7 @@ async def process_batch(url):
     
     if video_path:
         try:
-            if upload_to_supabase(video_path, "your-bucket-name", f'{video_id}.mp4'):
+            if upload_to_supabase(video_path, "youtube-video-snap", f'{video_id}.mp4'):
                 logging.info(f"Uploaded {video_id} to Supabase successfully")
             else:
                 logging.error(f"Failed to upload {video_id} to Supabase")

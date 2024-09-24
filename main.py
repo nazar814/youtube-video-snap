@@ -3,17 +3,25 @@ import yt_dlp
 import asyncio
 import logging
 import os
+from supabase import create_client, Client
 
 app = Flask(__name__)
 
-base_dir = os.path.expanduser("~/Downloads/")
+# Supabase configuration
+SUPABASE_URL = os.getenv('SUPABASE_URL')
+SUPABASE_KEY = os.getenv('SUPABASE_KEY')
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+base_dir = '/tmp/'  # Temporary directory for cloud environments like Render
 videos_output = os.path.join(base_dir, "videos_output")
+
 ydl_opts = {
     'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
     'outtmpl': os.path.join(videos_output, '%(id)s.%(ext)s'),
     'noplaylist': True,
 }
 
+# Function to download video using yt-dlp
 async def download_video(url):
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
@@ -23,41 +31,54 @@ async def download_video(url):
             logging.error(f"Error downloading {url}: {str(e)}")
             return None, None
 
+# Function to upload videos to Supabase
+def upload_to_supabase(file_path, bucket_name, file_name):
+    try:
+        with open(file_path, "rb") as file_data:
+            # Upload the video file to Supabase storage
+            response = supabase.storage.from_(bucket_name).upload(f"videos/{file_name}", file_data.read())
+            
+            if response.get("status_code") == 200:
+                logging.info(f"Uploaded {file_name} to Supabase successfully")
+                return True
+            else:
+                logging.error(f"Failed to upload {file_name} to Supabase: {response}")
+                return False
+    except Exception as e:
+        logging.error(f"Error uploading file to Supabase: {str(e)}")
+        return False
 
+# Process the batch to download and upload to Supabase
 async def process_batch(url):
     logging.info(f"Processing URL: {url}")
     video_path, video_id = await download_video(url)
+    
     if video_path:
         try:
-            clips = await process_video(video_path, video_id)
-            # if clips:
-            #     await processed_queue.put((url, video_id, video_path, clips))
-                
-            #     # Move clip file deletion here
-            #     for clip in clips:
-            #         os.remove(clip['path'])
+            if upload_to_supabase(video_path, "your-bucket-name", f'{video_id}.mp4'):
+                logging.info(f"Uploaded {video_id} to Supabase successfully")
+            else:
+                logging.error(f"Failed to upload {video_id} to Supabase")
+
+            os.remove(video_path)  # Remove after uploading
             
-            # # Move video file deletion here, after processing
-            # os.remove(video_path)
         except Exception as e:
             logging.error(f"Error processing video {video_path}: {str(e)}")
 
-
+# Flask route to handle video processing
 @app.route('/process_video', methods=['POST'])
 def process_video():
     data = request.get_json()
     video_url = data.get('video_url')
+    
     if not video_url:
         return jsonify({'error': 'No video URL provided'}), 400
 
     try:
-        await process_batch(video_url)
-
-        return jsonify({'message': 'Video processed and clips uploaded'}), 200
+        asyncio.run(process_batch(video_url))
+        return jsonify({'message': 'Video processed and uploaded to Supabase'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
-    
 
 if __name__ == '__main__':
     app.run(debug=True)

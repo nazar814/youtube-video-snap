@@ -1,0 +1,6 @@
+supabase
+yt_dlp
+asyncio
+logging
+flask
+os

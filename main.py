@@ -4,9 +4,12 @@ import asyncio
 import logging
 import os
 from supabase import create_client, Client
+from dotenv import 
+from moviepy.video.io.VideoFileClip import VideoFileClip
 
 app = Flask(__name__)
 
+load_dotenv()
 # Supabase configuration
 SUPABASE_URL = os.getenv('SUPABASE_URL')
 SUPABASE_KEY = os.getenv('SUPABASE_KEY')
@@ -39,7 +42,7 @@ def upload_to_supabase(file_path, bucket_name, file_name):
             # Upload the video file to Supabase storage
             response = supabase.storage.from_(bucket_name).upload(f"videos/{file_name}", file_data.read())
             
-            if response.get("status_code") == 200:
+            if response.status_code == 200:
                 logging.info(f"Uploaded {file_name} to Supabase successfully")
                 return True
             else:
@@ -49,10 +52,32 @@ def upload_to_supabase(file_path, bucket_name, file_name):
         logging.error(f"Error uploading file to Supabase: {str(e)}")
         return False
 
+async def snap_video(file_path, file_name):
+    video = VideoFileClip(file_path)
+    total_duration = video.duration
+    part_duration = total_duration / 3
+
+    part1 = video.subclip(0, part_duration)
+    part2 = video.subclip(part_duration, 2 * part_duration)
+    part3 = video.subclip(2 * part_duration, total_duration)
+
+    part1_path = f'part1.mp4'
+    part2_path = f'part2.mp4'
+    part3_path = f'part3.mp4'
+
+    part1.write_videofile(part1_path, codec="libx264")
+    part2.write_videofile(part2_path, codec="libx264")
+    part3.write_videofile(part3_path, codec="libx264")
+    
+    upload_to_supabase(part1_path, 'part1.mp4')
+    upload_to_supabase(part2_path, 'part2.mp4')
+    upload_to_supabase(part3_path, 'part3.mp4')
+
 # Process the batch to download and upload to Supabase
 async def process_batch(url):
     logging.info(f"Processing URL: {url}")
     video_path, video_id = await download_video(url)
+    await snap_video(video_path, video_id)
     
     if video_path:
         try:

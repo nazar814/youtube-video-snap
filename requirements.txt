@@ -4,3 +4,5 @@ asyncio
 logging
 flask
 gunicorn
+dotenv
+moviepy

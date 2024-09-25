@@ -4,12 +4,12 @@ import asyncio
 import logging
 import os
 from supabase import create_client, Client
-from dotenv import 
+# from dotenv import 
 from moviepy.video.io.VideoFileClip import VideoFileClip
 
 app = Flask(__name__)
 
-load_dotenv()
+# load_dotenv()
 # Supabase configuration
 SUPABASE_URL = os.getenv('SUPABASE_URL')
 SUPABASE_KEY = os.getenv('SUPABASE_KEY')

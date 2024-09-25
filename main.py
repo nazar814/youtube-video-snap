@@ -61,7 +61,7 @@ async def snap_video(file_path, file_name):
 
     part1_path = f'part1.mp4'
 
-    part1.write_videofile(part1_path, codec="libx264")
+    part1.write_videofile(part1_path, codec="mpeg4")
     
     upload_to_supabase(part1_path, 'part1.mp4')
 

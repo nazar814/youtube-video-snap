@@ -67,10 +67,10 @@ async def process_batch(url):
             logging.error(f"Error processing video {video_path}: {str(e)}")
 
 # Flask route to handle video processing
-@app.route('/process_video', methods=['POST'])
+@app.route('/process_video', methods=['GET'])
 def process_video():
-    data = request.get_json()
-    video_url = data.get('video_url')
+    video_url = request.args.get('video_url')
+
     
     if not video_url:
         return jsonify({'error': 'No video URL provided'}), 400

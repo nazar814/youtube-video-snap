@@ -19,6 +19,7 @@ ydl_opts = {
     'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
     'outtmpl': os.path.join(videos_output, '%(id)s.%(ext)s'),
     'noplaylist': True,
+    'cookiefile': './youtube-cookies.txt',
 }
 
 # Function to download video using yt-dlp

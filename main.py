@@ -52,7 +52,7 @@ def upload_to_supabase(file_path, bucket_name, file_name):
         logging.error(f"Error uploading file to Supabase: {str(e)}")
         return False
 
-async def snap_video(file_path, file_name):
+async def snap_video(file_path, video_id):
     video = VideoFileClip(file_path)
     total_duration = video.duration
     part_duration = total_duration / 3
@@ -63,7 +63,7 @@ async def snap_video(file_path, file_name):
 
     part1.write_videofile(part1_path, codec="mpeg4")
     
-    upload_to_supabase(part1_path, 'part1.mp4')
+    upload_to_supabase(part1_path, 'youtube-video-snap', f'{video_id} part1.mp4')
 
 # Process the batch to download and upload to Supabase
 async def process_batch(url):
